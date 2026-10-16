@@ -376,32 +376,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb61d648b3f895e418c7b1e72a7a7047, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SquadOptions
+  _soldierSquadConfig: {fileID: 11400000, guid: f0c38df71cd82404aa4f6cf092849c65, type: 2}
+  _machineGunnerSquadConfig: {fileID: 11400000, guid: 5090121f2f64d5047ae6a78ecd51029c, type: 2}
+  _soldierUnitConfig: {fileID: 11400000, guid: 5a82eb611b8208247a058b7968b5102c, type: 2}
+  _machineGunnerUnitConfig: {fileID: 11400000, guid: 773a5d4d78b93e14b86eaa5a5f17c88a, type: 2}
   _squadCollider: {fileID: 3682224766184204383}
-  maxAmount: 0
-  amount: 0
-  speed: 0
-  unitHealth: 0
-  squadHealth: 0
-  unitArmor: 0
-  armorPenetration: 0
   reloadingTime: 0
-  rotationTolerance:
-  - 0
-  - 0
-  distanceToleranceMin: 0
-  distanceToleranceMax: 0
-  canDoWhileWalking: 0
+  ammo: 0
+  amount: []
+  deadUnits: 0
   squad: 0
   _soldierSprite: {fileID: -2413806693520163455, guid: f436b403d619dd74daaed894207e85e9, type: 3}
-  _artillerySprite: {fileID: 7482667652216324306, guid: 05da79b1168246242857ffd9ddc0784b, type: 3}
-  _tankSprite: {fileID: -5177388603050735206, guid: c65829bf202f7b84f9bc31bc493f766a, type: 3}
-  rotationSpeed: 0
-  detectionRadius: 0
-  shellSpeed: 0
+  _machineGunnerSprite: {fileID: -5177388603050735206, guid: c65829bf202f7b84f9bc31bc493f766a, type: 3}
   shell: {fileID: 0}
   _soldierShellPrefab: {fileID: 7379468771625965560, guid: 47a48a98444a7444e8a213735a69e455, type: 3}
-  _tankShellPrefab: {fileID: 8213143859817994493, guid: 3cbde8c77a8af0947be4a9120b1ef2e5, type: 3}
-  _artilleryShellPrefab: {fileID: 7466684212891336921, guid: ef19ae8552ac92e44a95cda80757642c, type: 3}
   neutalsTag: Neutral
   alliesTag: Ally
   enemiesTag: Enemy
@@ -409,7 +397,7 @@ MonoBehaviour:
   _neutralColor:
     serializedVersion: 2
     rgba: 4294967295
-  _playerColor:
+  _allyColor:
     serializedVersion: 2
     rgba: 4294924890
   _enemyColor:
