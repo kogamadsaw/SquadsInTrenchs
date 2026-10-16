@@ -28,7 +28,17 @@ public class Shell : MonoBehaviour
 
                 if (squadOptions != null)
                 {
-                    if (_armorPenetration > squadOptions.unitArmor) squadOptions.squadHealth -= _armorPenetration - squadOptions.unitArmor;
+                    if (_armorPenetration > squadOptions.unitArmor && squadOptions.amount.Count != 0)
+                    {
+                        int a = Random.Range(0, squadOptions.amount.Count);
+
+                        squadOptions.amount[a].unitHealth -= _armorPenetration - squadOptions.unitArmor;
+                        if (squadOptions.amount[a].unitHealth <= 0)
+                        {
+                            squadOptions.amount.RemoveAt(a);
+                            squadOptions.CheckUnits();
+                        }
+                    }
 
                     Destroy(gameObject);
                 }
@@ -36,11 +46,11 @@ public class Shell : MonoBehaviour
         }
     }
 
-    public void Init(string targetTag, float distance, float speed, float distanceToleranceMin, float distanceToleranceMax, float armorPenetration)
+    public void Init(string targetTag, float distance, float speed, float distanceTolerance, float armorPenetration)
     {
         _targetTag = targetTag;
 
-        _distanceTolerance = Random.Range(distanceToleranceMin, distanceToleranceMax);
+        _distanceTolerance = Random.Range(1 - (distanceTolerance / 10), 1 + (distanceTolerance / 10));
         _distanceToFly = (distance / speed) * _distanceTolerance;
 
         _armorPenetration = armorPenetration;

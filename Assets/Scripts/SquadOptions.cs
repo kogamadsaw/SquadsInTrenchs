@@ -1,68 +1,82 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class SquadOptions : MonoBehaviour
 {
+    [Header("Squad classes")]
+    [SerializeField] private SquadClass _soldierSquadConfig;
+    [SerializeField] private SquadClass _machineGunnerSquadConfig;
+
+    [Header("Unit classes")]
+    [SerializeField] private UnitClass _soldierUnitConfig;
+    [SerializeField] private UnitClass _machineGunnerUnitConfig;
+
     [Header("Squad object with collider")]
     [SerializeField] private GameObject _squadCollider;
 
-    //Amount variables
-    [HideInInspector] public int maxAmount;
-    [HideInInspector] public int amount;
+    [Serializable]
+    public class Unit
+    {
+        public UnitType type;
+        public float unitHealth;
+        public float maxUnitHealth;
+    }
 
-    //Squad variables
-    [HideInInspector] public float speed;
-    [HideInInspector] public float unitHealth;
-    [HideInInspector] public float squadHealth;
-    [HideInInspector] public float unitArmor;
-    [HideInInspector] public float armorPenetration;
+
+
+    //survivability
+    [HideInInspector] public float unitArmor => (squad == squadType.MachineGunner) ? _machineGunnerUnitConfig.survivability.unitArmor : _soldierUnitConfig.survivability.unitArmor;
+    [HideInInspector] public int maxUnitAmount => (squad == squadType.MachineGunner) ? _machineGunnerSquadConfig.maxUnitAmount : _soldierSquadConfig.maxUnitAmount;
+
+    //movement
+    [HideInInspector] public float speed => (squad == squadType.MachineGunner) ? _machineGunnerUnitConfig.movement.speed : _soldierUnitConfig.movement.speed;
+    [HideInInspector] public float rotationSpeed => (squad == squadType.MachineGunner) ? _machineGunnerUnitConfig.movement.rotationSpeed : _soldierUnitConfig.movement.rotationSpeed;
+
+    //combat
+    [HideInInspector] public float rotationToleranceMin => (squad == squadType.MachineGunner) ? _machineGunnerUnitConfig.combat.rotationTolerance.min : _soldierUnitConfig.combat.rotationTolerance.min;
+    [HideInInspector] public float rotationToleranceMax => (squad == squadType.MachineGunner) ? _machineGunnerUnitConfig.combat.rotationTolerance.max : _soldierUnitConfig.combat.rotationTolerance.max;
+    [HideInInspector] public float distanceTolerance => (squad == squadType.MachineGunner) ? _machineGunnerUnitConfig.combat.distanceTolerance : _soldierUnitConfig.combat.distanceTolerance;
+    [HideInInspector] public float detectionRadius => (squad == squadType.MachineGunner) ? _machineGunnerUnitConfig.combat.detectionRadius : _soldierUnitConfig.combat.detectionRadius;
+    [HideInInspector] public int maxAmmo => (squad == squadType.MachineGunner) ? _machineGunnerSquadConfig.maxAmmo : _soldierSquadConfig.maxAmmo;
+    [HideInInspector] public bool canChangeWhileWalking => (squad == squadType.MachineGunner) ? _machineGunnerUnitConfig.combat.canChangeWhileWalking : _soldierUnitConfig.combat.canChangeWhileWalking;
+    [HideInInspector] public bool canShootWhileWalking => (squad == squadType.MachineGunner) ? _machineGunnerUnitConfig.combat.canShootWhileWalking : _soldierUnitConfig.combat.canShootWhileWalking;
+    [HideInInspector] public float shellSpeed => (squad == squadType.MachineGunner) ? _machineGunnerUnitConfig.combat.shellSpeed : _soldierUnitConfig.combat.shellSpeed;
+    [HideInInspector] public float armorPenetration => (squad == squadType.MachineGunner) ? _machineGunnerUnitConfig.combat.armorPenetration : _soldierUnitConfig.combat.armorPenetration;
+    [HideInInspector] public GameObject shell => (squad == squadType.MachineGunner) ? _machineGunnerUnitConfig.combat.unitShellPrefab : _soldierUnitConfig.combat.unitShellPrefab;
+
+
+
     [HideInInspector] public float reloadingTime;
-    [HideInInspector] public float[] rotationTolerance = new float[2];
-    [HideInInspector] public float distanceToleranceMin; [HideInInspector] public float distanceToleranceMax;
-    [HideInInspector] public bool canDoWhileWalking;
+    [HideInInspector] private float _saveReloadingTime;
+    [HideInInspector] public int ammo;
 
-    //Squad visual
+    // Amount variables
+    private float _floatMaxUnitAmount;
+    [HideInInspector] public List<Unit> amount;
+    [HideInInspector] public int deadUnits;
+
     public enum squadType
     {
-        Soldiers,
-        Tanks,
-        Artillery
+        Soldier,
+        MachineGunner
     }
     [Header("Squad type")]
     public squadType squad;
+
+
+
     private SpriteRenderer _squadSprite;
 
     [Header("Squad sprite")]
     [SerializeField] private Sprite _soldierSprite;
-    [SerializeField] private Sprite _artillerySprite;
-    [SerializeField] private Sprite _tankSprite;
+    [SerializeField] private Sprite _machineGunnerSprite;
 
-    //Finding variables
-    [HideInInspector] public float rotationSpeed;
-    [HideInInspector] public float detectionRadius;
-    
-    
-    //Shells variables
-    [HideInInspector] public float shellSpeed;
-    [HideInInspector] public GameObject shell;
-
-    [Header("Shell prefab")]
-    [SerializeField] private GameObject _soldierShellPrefab;
-    [SerializeField] private GameObject _tankShellPrefab;
-    [SerializeField] private GameObject _artilleryShellPrefab;
-
-    //Side variables
-    [Header("Side Tag")]
     public string neutalsTag;
     public string alliesTag;
     public string enemiesTag;
 
-    //Side visual
-    public enum sideType
-    {
-        Neutral,
-        Ally,
-        Enemy
-    }
+    public enum sideType { Neutral, Ally, Enemy }
     [Header("Side type")]
     public sideType side;
 
@@ -75,119 +89,103 @@ public class SquadOptions : MonoBehaviour
     {
         _squadSprite = GetComponentInChildren<SpriteRenderer>();
 
+        SquadSettings();
+        ammo = maxAmmo;
+    }
+
+    void Start()
+    {
+        ChangeTag();
+        CheckUnits();
+    }
+
+    public void ChangeTag()
+    {
+        switch (side)
+        {
+            case sideType.Neutral:
+                _squadCollider.tag = neutalsTag;
+                _squadSprite.color = _neutralColor;
+                break;
+            case sideType.Ally:
+                _squadCollider.tag = alliesTag;
+                _squadSprite.color = _allyColor;
+                break;
+            case sideType.Enemy:
+                _squadCollider.tag = enemiesTag;
+                _squadSprite.color = _enemyColor;
+                break;
+        }
+    }
+
+    public void SquadSettings()
+    {
         switch (squad)
         {
-            case squadType.Soldiers:
-                maxAmount = 10;
-                unitHealth = 10f;
-                squadHealth = unitHealth * maxAmount;
-                unitArmor = 0.1f;
+            case squadType.MachineGunner:
 
-                speed = 3f;
+                reloadingTime = _machineGunnerUnitConfig.combat.reloadingTime;
+                _saveReloadingTime = reloadingTime;
 
-                rotationSpeed = 100f;
-                detectionRadius = 15f;
+                _floatMaxUnitAmount = maxUnitAmount;
 
-                rotationTolerance[0] = -10f; rotationTolerance[1] = 10f;
-                distanceToleranceMin = 0.7f; distanceToleranceMax = 2f - distanceToleranceMin;
+                amount = new List<Unit>();
 
-                armorPenetration = 7.87f;
-                reloadingTime = 1;
+                for (int i = 0; i < maxUnitAmount; i++)
+                {
+                    Unit newUnit = new Unit();
+                    newUnit.type = UnitType.MachineGunner;
+                    newUnit.maxUnitHealth = _machineGunnerUnitConfig.survivability.maxUnitHealth;
+                    newUnit.unitHealth = newUnit.maxUnitHealth;
 
-                shell = _soldierShellPrefab;
-                shellSpeed = 15;
+                    amount.Add(newUnit);
+                }
 
-                canDoWhileWalking = false;
+                _squadSprite.sprite = _machineGunnerSprite;
+                break;
+
+            case squadType.Soldier:
+
+                reloadingTime = _soldierUnitConfig.combat.reloadingTime;
+                _saveReloadingTime = reloadingTime;
+
+                _floatMaxUnitAmount = maxUnitAmount;
+
+                amount = new List<Unit>();
+
+                for (int i = 0; i < maxUnitAmount; i++)
+                {
+                    Unit newUnit = new Unit();
+                    newUnit.type = UnitType.Soldier;
+                    newUnit.maxUnitHealth = _soldierUnitConfig.survivability.maxUnitHealth;
+                    newUnit.unitHealth = newUnit.maxUnitHealth;
+
+                    amount.Add(newUnit);
+                }
 
                 _squadSprite.sprite = _soldierSprite;
-                break;
-
-            case squadType.Tanks:
-                maxAmount = 1;
-                unitHealth = 100f;
-                squadHealth = unitHealth * maxAmount;
-                unitArmor = 25f;
-
-                speed = 2f;
-
-                rotationSpeed = 40f;
-                detectionRadius = 40f;
-                rotationTolerance[0] = -20f; rotationTolerance[1] = 20f;
-                distanceToleranceMin = 0.5f; distanceToleranceMax = 2f - distanceToleranceMin;
-
-                armorPenetration = 50.18f;
-                reloadingTime = 3;
-
-                shell = _tankShellPrefab;
-                shellSpeed = 10;
-
-                canDoWhileWalking = true;
-
-                _squadSprite.sprite = _tankSprite;
-                break;
-
-            case squadType.Artillery:
-                maxAmount = 2;
-                unitHealth = 25f;
-                squadHealth = unitHealth * maxAmount;
-                unitArmor = 5f;
-
-                speed = 1f;
-
-                rotationSpeed = 50f;
-                detectionRadius = 17f;
-                rotationTolerance[0] = -30f; rotationTolerance[1] = 30f;
-                distanceToleranceMin = 0.2f; distanceToleranceMax = 2f - distanceToleranceMin;
-
-                armorPenetration = 30.13f;
-                reloadingTime = 5;
-
-                shell = _artilleryShellPrefab;
-                shellSpeed = 7;
-
-                canDoWhileWalking = false;
-
-                _squadSprite.sprite = _artillerySprite;
                 break;
         }
 
         switch (side)
         {
             case sideType.Neutral:
-                _squadSprite.color = _neutralColor;
+                GetComponentInChildren<SquadAttack>().transform.rotation = Quaternion.Euler(0f, 0f, UnityEngine.Random.Range(180f, -180f));
                 break;
-
             case sideType.Ally:
-                _squadSprite.color = _allyColor;
+                GetComponentInChildren<SquadAttack>().transform.rotation = Quaternion.Euler(0f, 0f, 0f);
                 break;
-
             case sideType.Enemy:
-                _squadSprite.color = _enemyColor;
+                GetComponentInChildren<SquadAttack>().transform.rotation = Quaternion.Euler(0f, 0f, 180f);
                 break;
         }
     }
 
-    private void Start()
+    public void CheckUnits()
     {
-        if (side == sideType.Neutral)
-        {
-            GetComponentInChildren<SquadAttack>().transform.rotation = Quaternion.Euler(0f, 0f, Random.Range(180f, -180f));
-            _squadCollider.tag = neutalsTag;
-        }
-        else if (side == sideType.Ally)
-        {
-            GetComponentInChildren<SquadAttack>().transform.rotation = Quaternion.Euler(0f, 0f, 0f);
-            _squadCollider.tag = alliesTag;
-        }
-        else
-        {
-            GetComponentInChildren<SquadAttack>().transform.rotation = Quaternion.Euler(0f, 0f, 180f);
-            _squadCollider.tag = enemiesTag;
-        }
-    }
+        if (amount.Count == 0) Destroy(gameObject);
+        else reloadingTime = _saveReloadingTime * (1 + (1 - amount.Count / _floatMaxUnitAmount));
 
-    private void Update()
-    {
-        if (squadHealth <= 0) Destroy(gameObject);
+        Debug.Log(amount.Count);
     }
 }

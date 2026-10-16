@@ -37,7 +37,7 @@ public class SquadAttack : MonoBehaviour
         _squad = GetComponentInParent<SquadMovement>();
         _squadOptions = GetComponentInParent<SquadOptions>();
 
-        _randAngle = Random.Range(_squadOptions.rotationTolerance[0], _squadOptions.rotationTolerance[1]);
+        _randAngle = Random.Range(_squadOptions.rotationToleranceMin, _squadOptions.rotationToleranceMax);
 
         _reloadTimer = _squadOptions.reloadingTime;
     }
@@ -46,7 +46,7 @@ public class SquadAttack : MonoBehaviour
     {
         _reloadTimer += Time.deltaTime;
 
-        if (_squad != null && _squad.isMoving && !_squadOptions.canDoWhileWalking) return;
+        if (_squad != null && _squad.isMoving && !_squadOptions.canShootWhileWalking) return;
 
         FindClosestEnemy();
 
@@ -155,7 +155,7 @@ public class SquadAttack : MonoBehaviour
         if (_squadOptions.side == SquadOptions.sideType.Ally) targetTag = _squadOptions.enemiesTag;
         else if (_squadOptions.side == SquadOptions.sideType.Enemy) targetTag = _squadOptions.alliesTag;
 
-        shellScript.Init(targetTag, _distance.magnitude, _squadOptions.shellSpeed, _squadOptions.distanceToleranceMin, _squadOptions.distanceToleranceMax, _squadOptions.armorPenetration);
+        shellScript.Init(targetTag, _distance.magnitude, _squadOptions.shellSpeed, _squadOptions.distanceTolerance, _squadOptions.armorPenetration);
 
         Rigidbody2D rb = shell.GetComponent<Rigidbody2D>();
         if (rb != null)
@@ -164,7 +164,7 @@ public class SquadAttack : MonoBehaviour
         }
         else Debug.LogError("Add Rigidbody2D to shell");
 
-        _randAngle = Random.Range(_squadOptions.rotationTolerance[0], _squadOptions.rotationTolerance[1]);
+        _randAngle = Random.Range(_squadOptions.rotationToleranceMin, _squadOptions.rotationToleranceMax);
 
         _rotationEnded = false;
     }

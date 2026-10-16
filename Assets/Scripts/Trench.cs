@@ -4,9 +4,6 @@ public class Trench : MonoBehaviour
 {
     TrenchOptions _trenchOptions;
 
-    [SerializeField] private string _allyTagString;
-    [SerializeField] private string _enemyTagString;
-
     private string _allyTag;
     private string _enemyTag;
     private int _alliesInTrench;
@@ -14,10 +11,11 @@ public class Trench : MonoBehaviour
 
     void Start()
     {
-        _trenchOptions = GetComponent<TrenchOptions>();
+        _trenchOptions = GetComponentInParent<TrenchOptions>();
 
-        if (gameObject.tag == _trenchOptions.trenchAllyTag) { _enemyTag = _enemyTagString; _allyTag = _allyTagString; }
-        else { _enemyTag = _allyTagString; _allyTag = _enemyTagString; }
+        _alliesInTrench += _trenchOptions.soldiers;
+
+        ChangeTags();
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -25,23 +23,53 @@ public class Trench : MonoBehaviour
         if (collision.CompareTag(_enemyTag))
         {
             _enemiesInTrench += 1;
-            Debug.Log(_trenchOptions.trenchHealth);
         }
         if (collision.CompareTag(_allyTag))
         {
             _alliesInTrench += 1;
+            _alliesInTrench += _trenchOptions.soldiers;
         }
     }
 
     private void FixedUpdate()
     {
-        if (_enemiesInTrench > _alliesInTrench && _trenchOptions.trenchHealth > 0)
+        if (_trenchOptions.trench == TrenchOptions.trenchType.HQ)
         {
-            _trenchOptions.trenchHealth -= _enemiesInTrench * Time.fixedDeltaTime;
+            if (_enemiesInTrench > _alliesInTrench && _trenchOptions.trenchHealth > 0)
+            {
+                _trenchOptions.trenchHealth -= _enemiesInTrench * Time.fixedDeltaTime;
+            }
+            else if (_enemiesInTrench < _alliesInTrench && _trenchOptions.trenchHealth <= _trenchOptions.trenchMaxHealth)
+            {
+                _trenchOptions.trenchHealth += _alliesInTrench * Time.fixedDeltaTime;
+            }
+
+            if (_trenchOptions.trenchHealth <= 0) Destroy(gameObject);
         }
-        else if (_enemiesInTrench < _alliesInTrench && _trenchOptions.trenchHealth <= _trenchOptions.trenchMaxHealth)
+        else
         {
-            _trenchOptions.trenchHealth += _alliesInTrench * Time.fixedDeltaTime;
+            if (_enemiesInTrench > _alliesInTrench && _trenchOptions.trenchHealth > 0)
+            {
+                _trenchOptions.trenchHealth -= _enemiesInTrench * Time.fixedDeltaTime;
+            }
+            else if (_enemiesInTrench < _alliesInTrench && _trenchOptions.trenchHealth <= _trenchOptions.trenchMaxHealth)
+            {
+                _trenchOptions.trenchHealth += _alliesInTrench * Time.fixedDeltaTime;
+            }
+
+            if (_trenchOptions.trenchHealth <= 0)
+            {
+                _trenchOptions.side = (_trenchOptions.side == TrenchOptions.sideType.Ally) ? TrenchOptions.sideType.Enemy : TrenchOptions.sideType.Ally;
+                _trenchOptions.TrenchSide();
+
+                ChangeTags();
+
+                _trenchOptions.trenchHealth = 1;
+
+                int a = _alliesInTrench;
+                _alliesInTrench = _enemiesInTrench;
+                _enemiesInTrench = a;
+            }
         }
     }
 
@@ -55,5 +83,11 @@ public class Trench : MonoBehaviour
         {
             _alliesInTrench -= 1;
         }
+    }
+
+    private void ChangeTags()
+    {
+        _enemyTag = (gameObject.tag == _trenchOptions.trenchAllyTag) ? _trenchOptions.enemyTagString : _trenchOptions.allyTagString;
+        _allyTag = (gameObject.tag == _trenchOptions.trenchAllyTag) ? _trenchOptions.allyTagString : _trenchOptions.enemyTagString;
     }
 }

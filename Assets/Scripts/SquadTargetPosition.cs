@@ -119,31 +119,39 @@ public class SquadTargetPosition : MonoBehaviour
 
     void FindingSquad()
     {
-        RaycastHit2D hit = Physics2D.Raycast(mouseWorldPos, Vector2.zero);
+        RaycastHit2D[] hits = Physics2D.RaycastAll(mouseWorldPos, Vector2.zero);
 
-        if (hit.collider != null && hit.collider.GetComponentInParent<SquadOptions>() != null)
+        foreach (RaycastHit2D hit in hits)
         {
-            if(hit.collider.GetComponentInParent<SquadOptions>().side == SquadOptions.sideType.Ally) 
-            { 
-                squadScript = hit.collider.GetComponentInParent<SquadMovement>();
-                _squadUnit = hit.collider.GetComponentInParent<SquadOptions>();
-
-                if (squadScript != null && (!squadScript.isMoving || (squadScript.isMoving && _squadUnit.canDoWhileWalking)))
-                {
-                    isSelected = true;
-
-                    if (squadScript.isMoving)
+        if (hit.collider != null)
+        {
+            if (hit.collider.GetComponentInParent<SquadOptions>() != null)
+            {
+                    if (hit.collider.GetComponentInParent<SquadOptions>().side == SquadOptions.sideType.Ally)
                     {
-                        _targetWorldPos = squadScript.targetWorldPos;
+                        squadScript = hit.collider.GetComponentInParent<SquadMovement>();
+                        _squadUnit = hit.collider.GetComponentInParent<SquadOptions>();
 
-                        Vector3Int currentTargetCell = _grid.WorldToCell(_targetWorldPos);
-                        cellWorldPos = _grid.GetCellCenterWorld(currentTargetCell);
+                        if (squadScript != null && (!squadScript.isMoving || (squadScript.isMoving && _squadUnit.canChangeWhileWalking)))
+                        {
+                            isSelected = true;
 
-                        _selection.SelectedCellPosition();
+                            if (squadScript.isMoving)
+                            {
+                                _targetWorldPos = squadScript.targetWorldPos;
 
-                        isCellSelected = true;
-                        _selection.DisplaySelectedCell();
-                        _canSelectCell = true;
+                                Vector3Int currentTargetCell = _grid.WorldToCell(_targetWorldPos);
+                                cellWorldPos = _grid.GetCellCenterWorld(currentTargetCell);
+
+                                _selection.SelectedCellPosition();
+
+                                isCellSelected = true;
+                                _selection.DisplaySelectedCell();
+                                _canSelectCell = true;
+
+                                return;
+                            }
+                        }
                     }
                 }
             }
